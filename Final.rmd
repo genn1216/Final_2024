@@ -183,6 +183,58 @@ Based on the trial results, widespread use of the Covid921 vaccine is recommende
 
 ## Females
 
+##barplot
+
+```{r}
+dd2 <- Females %>% group_by(infected,treatment) %>% summarize(count=n()) %>% mutate(prcnt=count/sum(count))
+
+
+# the group_by followed by summarize(count=n())
+
+basicC <- ggplot(dd2,aes(x=infected,y=count,fill=treatment))
+basicC + geom_bar(stat="identity",position="dodge")
+
+#Now for percentage plot
+
+basicCC <- ggplot(dd2,aes(x=infected,y=prcnt*100,fill=treatment))
+basicCC + geom_bar(stat="identity", position = "dodge")
+```
+
+This Plot Represents the population of females and shows the treatment and infected of Covid 19, As well as shows us which one worked better and showed better results for those who got Covid 19 that are female like the placebo or the vaccine. In this plot it shows that the number of people who took the placebo worked a lot better for them than the females who had taken the vaccine. Those who had taken the vaccine i belive were more exposed to getting Covid 19 than those who had taken the placebo and the females on the placebo side seemed to work a lot better for them. The percentage seems to be at 100% when i open up this plot.
+
+### Numerical Results
+```{r}
+table1 <- xtabs(~infected + treatment, data=Females)
+rowPerc(table1)
+colPerc(table1)
+```
+These Numerical Results Shown above, basically are supposed to show percentages of the infected and the treatment of those with Covid 19, fter they had taken the vaccine or the placebo. In the results above the Covid 19 is shown to be abot 100 while the females who were Ok are also shown at a percentage of 100% but Covid 19 at the bottom seems to show NaN and Ok at NaN as well but the total for both is 100% in these numerical results for the females.
+
+## Inferential
+
+```{r}
+fisher_result <- fisher.test(table1)
+fisher.test(table1)
+Femalesfish <- fisher.test(table1)
+Femalesfish
+```
+
+The Information for the fishers Exact Data or the Inferential results show, the p value is at 1 while the alternative hypothesis is at true odds ratio is not equal to 1 percent of 95 percent Confidence Interval. Then as the results show the Odds ratio is 0, for the exact data it is the same and still shows the result of 0. So the females who got the placebo were not likely to get Covid 19 while those who had the vaccine i belive are much more likely to get Covid all while still taking the vaccine.
+
+```{r}
+effect <- Femalesfish$p.value/(Femalesfish$p.value +1)
+effectivenessgal = Femalesfish$estimate/(Femalesfish$estimate +1)*100
+print(effectivenessgal)
+```
+
+```{r}
+low=(Females$conf.int[1]/(Femalesfish$conf.int[1] +1))*100
+hi=(Females$conf.int[2]/(Femalesfish$conf.int[2] +1))*100
+options(digits=2)
+```
+## Effective Confidence Interval
+
+As Shown above, the effectiveness for Covid 19 for the females is at 0% as shown that shows us that the vaccine is not effective at all. Based on the plot shown above the placebo i think is the one that may show much better results than those who had taken the vaccine. So now that we know we can continue and onclude that the placebo i belive was the most effective while the vaccine was not.
 
 
 
@@ -245,9 +297,9 @@ The p-value is 3e-12 with that being said, the conclusion is that these results 
 ## Effectiveness Confidence Interval `r low`  to `r hi`
 
 ```{r}
-dd2 <- drugfish$p.value/(FinalData$p.value +1)
-dd2 = Druguser$estimate/(FinalData$estimate +1)*100
-print(table1)
+effect <- drugfish$p.value/(drugfish$p.value +1)
+effectivenessdrug = drugfish$estimate/(drugfish$estimate +1)*100
+print(effectivenessdrug)
 ```
 
 ```{r}
@@ -257,4 +309,7 @@ options(digits=2)
 ```
 
 The codes above show the effectiveness for the covid-19 for drug users. If the effectiveness is above 50% that means that the vaccine is effective. Based on the interval we can conclude that the vaccine is effective in protecting drug users from getting covid-19. For a vaccine to be effective the hallmark is supposed to be 60% or better. This vaccine works great in protecting drug users from contracting covid-19.
-The odds ratio is approximately how effective the vaccine is. The odds ratio for the drug users can be seen above as 69. The effectiveness confidence interval for the drug users is 54.96 to 73.63.
+The odds ratio is approximately how effective the vaccine is. The odds ratio for the drug users can be seen above as 8. The effectiveness confidence interval for the drug users is 1:2.
+
+
+
