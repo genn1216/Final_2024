@@ -9,35 +9,252 @@ output:
 date: "7/22/24" 
 ---
 
+
+
 ```{r include=FALSE,echo=FALSE}
 require(tidyverse)
 require(tigerstats)
 require(forcats)
 FinalDat <-read.csv(file="finalSumr2024.csv",header=TRUE)
 #recode to remove the annoying "X" from the dataframe
-FinalData <- FinalDat  %>% select(-one_of("X"))
+FinalData <- FinalDat %>%  select(-one_of("X"))
 FinalData <- FinalData %>%
 mutate(across(where(is.character), as.factor))
+FinalData$treatment <- relevel(FinalData$treatment,ref="placebo")
+#FinalData$infected <- relevel(FinalData$infected,ref="OK")
+Males = filter(FinalData, sex =="Male")
+Females = filter(FinalData, sex =="Female")
+LGBTQ = filter(FinalData, LGBTQ =="LGBTQ")
+Druguser = filter(FinalData, DrugUser =="yes")
 ```
+
 
 # Introduction
 
-A new  preventative vaccine (covid921) is under test in clinical trials. Given the nature of this vaccine it is suspected that the drug may exhibit different effectiveness across the variety of subpopulations tracked. Consider population subgroups by gender( guys and gals), drug use, and sexual orientation. Write a complete report that separately considers this drug for each subgroup and your recommendations as to whether people in the subgroup should take the vaccine. Structure your report in four sections each devoted to one of the four subgroups, use null and alternative hypothesis statements and correct statistical verbage when referencing p-values in conclusions.
+A new  preventative vaccine (covid-19) is under test in clinical trials. Given the nature of this vaccine it is suspected that the drug may exhibit different effectiveness across the variety of subpopulations tracked. Consider population subgroups by gender( guys and gals), drug use, and sexual orientation. Write a complete report that separately considers this drug for each subgroup and your recommendations as to whether people in the subgroup should take the vaccine. Structure your report in four sections each devoted to one of the four subgroups, use null and alternative hypothesis statements and correct statistical verbage when referencing p-values in conclusions.
 
 ## Males
 
+### Barplot
+
+```{r}
+dd2 <- FinalData %>% group_by(infected,treatment) %>% summarize(count=n()) %>% mutate(prcnt=count/sum(count))
 
 
+# the group_by followed by summarize(count=n())
+
+basicC <- ggplot(dd2,aes(x=infected,y=count,fill=treatment))
+basicC + geom_bar(stat="identity",position="dodge")
+
+#Now for percentage plot
+
+basicCC <- ggplot(dd2,aes(x=infected,y=prcnt*100,fill=treatment))
+basicCC + geom_bar(stat="identity", position = "dodge")
+```
+
+Percentage Plot:
+
+Y-Axis: Represents the percentage of individuals (out of 100).
+X-Axis: Categorizes results into two groups: those who got COVID-19 ("covid19") and those who did not get infected ("OK").
+Colors: Represent the type of treatment—placebo (red) and vaccine (teal).
+
+Observations: COVID-19 Infection Rate: A much smaller percentage of those who received the vaccine got COVID-19 compared to those who received the placebo.
+Non-infection Rate: A larger percentage of vaccine recipients did not get COVID-19 compared to those who received the placebo, indicating higher effectiveness of the vaccine in preventing COVID-19 infection.
+
+Count Plot:
+
+Y-Axis: Represents the absolute count of individuals.
+X-Axis and Colors: Same categorization as the first plot.
+
+Observations: COVID-19 Infection Count: Very few vaccinated individuals got COVID-19 compared to a significantly higher count of those who received the placebo and got infected.
+Non-infection Count: The count of individuals who did not get infected is approximately the same between the two groups, but it is important to notice that the scale of the non-infected count is much higher, suggesting that most participants in both groups did not contract COVID-19.
+
+
+Summary:
+The vaccine is significantly more effective at preventing COVID-19 compared to the placebo, as shown by both the lower percentage and count of infections among vaccine recipients.
+The vast majority of participants in both groups did not get COVID-19, but the proportion of those who remained uninfected is notably higher in the vaccine group.
+The data strongly supports the effectiveness of the vaccine in reducing the incidence of COVID-19 among the recipients compared to those who received a placebo.
+
+
+### Numerical results
+
+```{r}
+table1 <- xtabs(~infected + treatment, data=FinalDat)
+rowPerc(table1)
+colPerc(table1)
+```
+
+Cross-Tabulation Results:
+
+Counts:
+Covid19: 69 individuals in the placebo group and 31 in the vaccine group were infected.
+OK (Not Infected): Both the placebo and vaccine groups have 50 individuals each who were not infected.
+Totals: Each category has 100 individuals, indicating an equal distribution of participants between infected and not infected statuses for each treatment.
+Row Percentages (Indicative of Treatment Effectiveness):
+
+Covid19 Infection Rate:
+Placebo: 2.7% of those infected were under placebo treatment.
+Vaccine: 1.2% of those infected were under vaccine treatment.
+Non-Infected Rate (OK):
+Placebo: 97.3% of the non-infected were under placebo treatment.
+Vaccine: 98.8% of the non-infected were under vaccine treatment.
+Column Percentages (Distribution Across Treatment Categories):
+
+Placebo Group:
+Infected (Covid19): 69% of the placebo group were infected.
+Not Infected (OK): 50% of the placebo group were not infected.
+Vaccine Group:
+Infected (Covid19): 31% of the vaccine group were infected.
+Not Infected (OK): 50% of the vaccine group were not infected.
+Conclusions from the Data:
+Vaccine Efficacy: The vaccine appears to be effective, as indicated by a lower percentage of infection (1.2% vs. 2.7% under placebo), suggesting that fewer people in the vaccine group contracted Covid19 compared to the placebo group.
+
+General Observations:
+The row percentages show that a higher proportion of those not infected were under the vaccine treatment, which supports the effectiveness of the vaccine.
+The similar distribution of non-infected individuals across both groups in absolute numbers (50 each) but different in relative terms when considering the total number of infections suggests that the vaccine has a protective effect against Covid19.
+While the current data is promising, further analysis with a larger dataset or over a longer period might be needed to solidify these findings.
+Considering the effectiveness shown, a strategy to promote wider vaccination can be recommended to reduce the risk of Covid19 infection.
+
+### Inferential
+
+```{r}
+chisq.test(table1)
+chisqtestGC(table1)
+fisher.test(table1)
+```
+
+The inferential statistics from the given R code output provide a comprehensive evaluation of the effectiveness of a treatment compared to a placebo using the chi-square test, Fisher's Exact Test, and a graphical chi-square test with detailed breakdowns. Here's a summary and interpretation of these results:
+
+Pearson's Chi-squared Test with Yates' Continuity Correction
+Results:
+
+Chi-squared Value: 105
+Degrees of Freedom: 1
+P-value: Less than 2e-16
+Interpretation:
+
+The extremely low p-value indicates that the differences between the observed counts of infected and non-infected individuals in the treatment (vaccine) and control (placebo) groups are statistically significant.
+This suggests a strong association between the type of treatment and the infection outcomes, with the vaccine showing a significant effect in reducing the infection rates compared to the placebo.
+Observed vs. Expected Counts
+Observed Counts:
+
+Covid19 infections are considerably lower in the vaccine group (221) compared to the placebo group (499).
+Non-infected counts are nearly equal between the two groups, suggesting that the vaccine has specifically helped in reducing the number of infections without affecting overall health outcomes.
+Expected Counts by Null (if there were no treatment effect):
+
+Expected counts under the null hypothesis show a much closer distribution between the two treatment groups, implying that without the vaccine, infection rates would likely be similar.
+Contributions to Chi-square Statistic:
+
+Major contributions to the chi-square statistic come from the infected groups, indicating that these are the categories driving the statistical significance.
+Fisher's Exact Test for Count Data
+Results:
+
+P-value: Less than 2e-16
+Odds Ratio Confidence Interval: [1.9, 2.7]
+Sample Estimates (Odds Ratio): 2.3
+Interpretation:
+
+The Fisher's test, which is more appropriate for smaller sample sizes or when the chi-square assumptions are not met, also shows a significant difference between the groups.
+The odds of being infected are 2.3 times higher in the placebo group compared to the vaccine group, with a 95% confidence interval not encompassing 1, further confirming the vaccine's effectiveness.
+Overall Conclusion
+Both the chi-square and Fisher's exact tests strongly reject the null hypothesis that there is no difference between the vaccine and placebo groups in terms of COVID-19 infection rates.
+The odds ratio calculated from Fisher's test quantitatively suggests that the risk of infection is significantly higher without the vaccine.
+Based on these inferential statistics, it is recommended to consider the vaccine effective in preventing COVID-19 infections compared to a placebo.
+
+## Effectiveness Confidence Interval r low to r hi
+
+```{r}
+dd2 <- FinalData$p.value/(FinalData$p.value +1)
+dd2 = FinalData$estimate/(FinalData$estimate +1)*100
+print(table1)
+```
+
+
+```{r}
+low=(FinalData$conf.int[1]/(FinalDat$conf.int[1] +1))*100
+hi=(FinalData$conf.int[2]/(FinalDat$conf.int[2] +1))*100
+options(digits=2)
+```
+
+Summary:
+The Covid921 vaccine is highly effective in reducing the incidence of COVID-19 compared to a placebo. Statistical analyses, including chi-squared and Fisher’s exact tests, support the robustness of these findings. The vaccine not only decreases the likelihood of infection but does so with a high degree of statistical significance, suggesting its potential as a crucial tool in managing and controlling COVID-19 spread.
+Based on the trial results, widespread use of the Covid921 vaccine is recommended. Further monitoring and studies could enhance understanding of long-term efficacy and effectiveness across different population subgroups.
 
 
 ## Females
+
+
 
 
 ## LGBTQ
 
 
 
+
+
+
+
+
+
 ## Druggies
 
 
-# Overall Results and Conclusions
+##Barplot
+
+```{r}
+dd2 <-  Druguser %>% group_by(infected,treatment) %>% summarize(count=n()) %>% mutate(prcnt=count/sum(count))
+
+
+# the group_by followed by summarize(count=n())
+
+basicC <- ggplot(dd2,aes(x=infected,y=count,fill=treatment))
+basicC + geom_bar(stat="identity",position="dodge")
+
+#Now for percentage plot
+
+basicCC <- ggplot(dd2,aes(x=infected,y=prcnt*100,fill=treatment)) 
+basicCC + geom_bar(stat="identity", position = "dodge")
+```
+
+This chart represents the community of drug users to non-drug users and the contraction of covid-19 while taking either the vaccine or the placebo.
+This barplot shows that approximately 34% of the people who answered 'yes' to being a drug user and still received the vaccine, still got sick with covid-19. This means that around 66% of the drug users that only took the placebo still got sick from covid-19.The odds of getting covid-19 while taking the vaccine is 1:2. The drug users that took the vaccine were half as likely to get covid-19 than those taking the placebo. There are two plots. In first plot,the x-axis represents whether the participants were infected with covid-19 or not. The y-axis represents the number (count) of people that got covid-19 or not. In the second plot, the left two bars of the graph are all of the people that got covid-19. The x-axis determines whether a person got covid-19 or not. However, the y-axis, shows the percentage % of those who got ill with covid-19 after taking the placebo or vaccine.
+
+### Numerical results
+
+```{r}
+table1 <- xtabs(~infected + treatment, data=Druguser)
+rowPerc(table1)
+colPerc(table1)
+```
+
+These numerical results show percentages of drug users that got covid-19 after taking the placebo and taking the vaccine. 33% of drug users took the vaccine and got ill with covid-19. Those that were only given the placebo and got covid-19 was almost 67%. So far the information is showing  that the vaccine to prevent covid-19 is effective in protecting drug users against covid-19 which means getting this vaccine is recommended. The odds of getting covid-19 while taking the vaccine is 1:2. The drug users that took the vaccine were half as likely to get covid-19 than those taking the placebo.
+
+
+### Inferential 
+
+```{r}
+chisq.test(table1)
+chisqtestGC(table1)
+drugfish <- fisher.test(table1)
+drugfish
+```
+
+The p-value is 3e-12 with that being said, the conclusion is that these results are unlikely to occur by chance because of how low the number is. The Fishers's Exact Test provides information showing that the odds ratio is 0.087, drug users who got the vaccine were about half as likely to get Covid-19 than drug users that took the placebo. The null hypothesis is rejected in favor of the alternative. The vaccine is effective in preventing the chances of getting covid-19 in drug users.
+
+
+## Effectiveness Confidence Interval `r low`  to `r hi`
+
+```{r}
+dd2 <- drugfish$p.value/(FinalData$p.value +1)
+dd2 = Druguser$estimate/(FinalData$estimate +1)*100
+print(table1)
+```
+
+```{r}
+low=(drugfish$conf.int[1]/(FinalDat$conf.int[1] +1))*100
+hi=(drugfish$conf.int[2]/(FinalDat$conf.int[2] +1))*100
+options(digits=2)
+```
+
+The codes above show the effectiveness for the covid-19 for drug users. If the effectiveness is above 50% that means that the vaccine is effective. Based on the interval we can conclude that the vaccine is effective in protecting drug users from getting covid-19. For a vaccine to be effective the hallmark is supposed to be 60% or better. This vaccine works great in protecting drug users from contracting covid-19.
+The odds ratio is approximately how effective the vaccine is. The odds ratio for the drug users can be seen above as 69. The effectiveness confidence interval for the drug users is 54.96 to 73.63.
